@@ -1,0 +1,7 @@
+{"time":"2025-04-22T15:28:21.547731619+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"/home/jonas/Projects/nanoGPT/wandb/run-20250422_152821-b7cln62v/logs/debug-core.log"}
+{"time":"2025-04-22T15:28:21.866691096+02:00","level":"INFO","msg":"created new stream","id":"b7cln62v"}
+{"time":"2025-04-22T15:28:21.866767279+02:00","level":"INFO","msg":"stream: started","id":"b7cln62v"}
+{"time":"2025-04-22T15:28:21.866910438+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"b7cln62v"}
+{"time":"2025-04-22T15:28:21.867045952+02:00","level":"INFO","msg":"sender: started","stream_id":"b7cln62v"}
+{"time":"2025-04-22T15:28:21.867305492+02:00","level":"INFO","msg":"handler: started","stream_id":"b7cln62v"}
+{"time":"2025-04-22T15:28:22.152399084+02:00","level":"INFO","msg":"Starting system monitor"}

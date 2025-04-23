@@ -66,12 +66,25 @@ if load_meta:
     stoi, itos = meta['stoi'], meta['itos']
     encode = lambda s: [stoi[c] for c in s]
     decode = lambda l: ''.join([itos[i] for i in l])
+    # Replace the default 'else' block for encode/decode:
+# else:
+#     print("No meta.pkl found, assuming GPT-2 encodings...")
+#     enc = tiktoken.get_encoding("gpt2")
+#     encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
+#     decode = lambda l: enc.decode(l)
+# With something like:
 else:
+     print("Assuming Gemma tokenizer...")
+     from transformers import AutoTokenizer
+     tokenizer_id = "google/gemma-2b" # Match your training tokenizer
+     tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
+     encode = lambda s: tokenizer.encode(s, add_special_tokens=False) # Or True depending on training
+     decode = lambda l: tokenizer.decode(l)
     # ok let's assume gpt-2 encodings by default
-    print("No meta.pkl found, assuming GPT-2 encodings...")
-    enc = tiktoken.get_encoding("gpt2")
-    encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
-    decode = lambda l: enc.decode(l)
+    #print("No meta.pkl found, assuming GPT-2 encodings...")
+    #enc = tiktoken.get_encoding("gpt2")
+    #encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
+    #decode = lambda l: enc.decode(l)
 
 # encode the beginning of the prompt
 if start.startswith('FILE:'):
