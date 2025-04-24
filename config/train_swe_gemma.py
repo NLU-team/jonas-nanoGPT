@@ -13,8 +13,8 @@ wandb_project = 'jotest-bpe-gemma2'
 wandb_run_name = 'jotest3-mini-gpt-bpe-gemma2'
 
 dataset = 'swedish'
-gradient_accumulation_steps = 32
-batch_size = 24
+gradient_accumulation_steps = 8
+batch_size = 12
 block_size = 1024 # context of up to 1024 previous characters
 
 # baby GPT model :)
@@ -39,3 +39,4 @@ warmup_iters = 100 # not super necessary potentially
 compile = True # when on DGX, PyTorch 2.0+ compilation offers significant speedups on A100s.
 # launch tjis when on dgx:
 # torchrun --standalone --nproc_per_node=8 train.py config/train_swe_gemma.py
+# CUDA_VISIBLE_DEVICES=6 python train.py config/train_swe_gemma.py --device=cuda [any other args]
