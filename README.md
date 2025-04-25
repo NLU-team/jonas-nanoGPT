@@ -1,3 +1,52 @@
+### Training a Swedish Mini-GPT with Gemma Tokenizer
+
+This section documents an experiment training a small GPT model (`nanoGPT` architecture) on a custom Swedish dataset using the Gemma tokenizer.
+
+**1. Data Preparation:**
+
+* A Swedish text dataset was used (e.g., sourced from [HPLT/HPLT2.0_cleaned](https://huggingface.co/datasets/HPLT/HPLT2.0_cleaned/viewer/swe_Latn)
+
+* A custom data preparation script (`data/swedish/prepare.py`) was created by modifying the existing `prepare.py` scripts.
+    * Instead of `tiktoken`, it uses `transformers.AutoTokenizer` to load a Gemma tokenizer (e.g., `"google/gemma-2b"`).
+    * It uses the Hugging Face `datasets` library to load and process the data (if sourced from HF Hub).
+    * It encodes the text using `tokenizer.encode()` and saves the output tokens as `train.bin` and `val.bin` in `data/swedish/`.
+    * **Note:** This script does not generate a `meta.pkl` file.
+
+**2. Configuration:**
+
+* A new configuration file (e.g., `config/train_swe_gemma.py`) was created.
+* Key settings included:
+    * `dataset = 'swedish'`
+    * `vocab_size = 256000` (to match the Gemma tokenizer)
+    * Model architecture similar to GPT-2 small (experimented with different values where default was e.g., `n_layer=12`, `n_head=12`, `n_embd=768`) or smaller (`n_layer=6`, etc.).
+    * Appropriate `batch_size`, `block_size`, `learning_rate`, `max_iters`, and `gradient_accumulation_steps` were set based on available hardware (e.g., single A100 or multi-GPU DGX setup).
+    * `wandb_log = True` was set for experiment tracking.
+
+**3. Script Modifications:**
+
+* **`train.py`:** Modified around lines 160-170 to correctly prioritize the `vocab_size` set in the config file over the default (50304) when `init_from='scratch'` and no `meta.pkl` is present. This is crucial for using tokenizers with different vocabulary sizes.
+* **`sample.py`:** Modified to load the appropriate Gemma `AutoTokenizer` and use its `decode` method instead of relying on `tiktoken` or `meta.pkl`, ensuring correct text generation from the trained model.
+
+**4. Training:**
+
+* Training was launched using `python train.py config/train_swe_gemma.py ...` for single GPU or `CUDA_VISIBLE_DEVICES=... torchrun --standalone --nproc_per_node=N train.py ...` for multi-GPU DDP.
+* On DGX A100 hardware, MFU (Model FLOPs Utilization) reached around 52%, indicating good hardware efficiency.
+* The model trained successfully, achieving a validation loss around ~3.2 after ~5000 iterations for a small configuration.
+
+**5. Results & Notes:**
+
+* The best checkpoint was saved based on the lowest validation loss.
+* Running `sample.py` (with the necessary tokenizer modifications) generates Swedish text based on the learned patterns.
+* **Important:** Due to the relatively small model size and limited training data (~300k-400k tokens compared to billions/trillions for large models), the generated output is expected to lack high-level coherence and may appear nonsensical. This demonstrates the training pipeline works but highlights the scale needed for fluent generation.
+* Achieving better quality Swedish generation would likely require significantly more data, larger model architectures, longer training, or finetuning a larger pre-trained model.
+
+**6. Dependencies:**
+
+* This workflow requires additional dependencies beyond the base `nanoGPT` ones:
+    * `transformers`
+    * `datasets`
+    * `sentencepiece` (often required by Gemma tokenizer)
+* Ensure these are included in your environment (e.g., in `requirements.txt` or `pyproject.toml`).
 
 # nanoGPT
 
