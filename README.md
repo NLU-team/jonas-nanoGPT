@@ -1,4 +1,4 @@
-### Training a Swedish Mini-GPT with Gemma Tokenizer
+# Training a Swedish Mini-GPT with Gemma Tokenizer
 
 This section documents an experiment training a small GPT model (`nanoGPT` architecture) on a custom Swedish dataset using the Gemma tokenizer.
 
@@ -7,20 +7,20 @@ This section documents an experiment training a small GPT model (`nanoGPT` archi
 * A Swedish text dataset was used (e.g., sourced from [HPLT/HPLT2.0_cleaned](https://huggingface.co/datasets/HPLT/HPLT2.0_cleaned/viewer/swe_Latn)
 
 * A custom data preparation script (`data/swedish/prepare.py`) was created by modifying the existing `prepare.py` scripts.
-    * Instead of `tiktoken`, it uses `transformers.AutoTokenizer` to load a Gemma tokenizer (e.g., `"google/gemma-2b"`).
-    * It uses the Hugging Face `datasets` library to load and process the data (if sourced from HF Hub).
-    * It encodes the text using `tokenizer.encode()` and saves the output tokens as `train.bin` and `val.bin` in `data/swedish/`.
-    * **Note:** This script does not generate a `meta.pkl` file.
+  * Instead of `tiktoken`, it uses `transformers.AutoTokenizer` to load a Gemma tokenizer (e.g., `"google/gemma-2b"`).
+  * It uses the Hugging Face `datasets` library to load and process the data (if sourced from HF Hub).
+  * It encodes the text using `tokenizer.encode()` and saves the output tokens as `train.bin` and `val.bin` in `data/swedish/`.
+  * **Note:** This script does not generate a `meta.pkl` file.
 
 **2. Configuration:**
 
 * A new configuration file (e.g., `config/train_swe_gemma.py`) was created.
 * Key settings included:
-    * `dataset = 'swedish'`
-    * `vocab_size = 256000` (to match the Gemma tokenizer)
-    * Model architecture similar to GPT-2 small (experimented with different values where default was e.g., `n_layer=12`, `n_head=12`, `n_embd=768`) or smaller (`n_layer=6`, etc.).
-    * Appropriate `batch_size`, `block_size`, `learning_rate`, `max_iters`, and `gradient_accumulation_steps` were set based on available hardware (e.g., single A100 or multi-GPU DGX setup).
-    * `wandb_log = True` was set for experiment tracking.
+  * `dataset = 'swedish'`
+  * `vocab_size = 256000` (to match the Gemma tokenizer)
+  * Model architecture similar to GPT-2 small (experimented with different values where default was e.g., `n_layer=12`, `n_head=12`, `n_embd=768`) or smaller (`n_layer=6`, etc.).
+  * Appropriate `batch_size`, `block_size`, `learning_rate`, `max_iters`, and `gradient_accumulation_steps` were set based on available hardware (e.g., single A100 or multi-GPU DGX setup).
+  * `wandb_log = True` was set for experiment tracking.
 
 **3. Script Modifications:**
 
@@ -43,12 +43,12 @@ This section documents an experiment training a small GPT model (`nanoGPT` archi
 **6. Dependencies:**
 
 * This workflow requires additional dependencies beyond the base `nanoGPT` ones:
-    * `transformers`
-    * `datasets`
-    * `sentencepiece` (often required by Gemma tokenizer)
+  * `transformers`
+  * `datasets`
+  * `sentencepiece` (often required by Gemma tokenizer)
 * Ensure these are included in your environment (e.g., in `requirements.txt` or `pyproject.toml`).
 
-# nanoGPT
+## nanoGPT
 
 ![nanoGPT](assets/nanogpt.jpg)
 
@@ -60,19 +60,20 @@ Because the code is so simple, it is very easy to hack to your needs, train new 
 
 ## install
 
-```
+```bash
+
 pip install torch numpy transformers datasets tiktoken wandb tqdm
 ```
 
 Dependencies:
 
-- [pytorch](https://pytorch.org) <3
-- [numpy](https://numpy.org/install/) <3
--  `transformers` for huggingface transformers <3 (to load GPT-2 checkpoints)
--  `datasets` for huggingface datasets <3 (if you want to download + preprocess OpenWebText)
--  `tiktoken` for OpenAI's fast BPE code <3
--  `wandb` for optional logging <3
--  `tqdm` for progress bars <3
+* [pytorch](https://pytorch.org) <3
+* [numpy](https://numpy.org/install/) <3
+* `transformers` for huggingface transformers <3 (to load GPT-2 checkpoints)
+* `datasets` for huggingface datasets <3 (if you want to download + preprocess OpenWebText)
+* `tiktoken` for OpenAI's fast BPE code <3
+* `wandb` for optional logging <3
+* `tqdm` for progress bars <3
 
 ## quick start
 
@@ -98,7 +99,7 @@ python sample.py --out_dir=out-shakespeare-char
 
 This generates a few samples, for example:
 
-```
+
 ANGELO:
 And cowards it be strawn to my bed,
 And thrust the gates of my threats,
@@ -117,7 +118,6 @@ If you have done evils of all disposition
 To end his power, the day of thrust for a common men
 That I leave, to fight with over-liking
 Hasting in a roseman.
-```
 
 lol  `¯\_(ツ)_/¯`. Not bad for a character-level model after 3 minutes of training on a GPU. Better results are quite likely obtainable by instead finetuning a pretrained GPT-2 model on this dataset (see finetuning section later).
 
@@ -132,15 +132,16 @@ Here, since we are running on CPU instead of GPU we must set both `--device=cpu`
 ```sh
 python sample.py --out_dir=out-shakespeare-char --device=cpu
 ```
+
 Generates samples like this:
 
-```
+
 GLEORKEN VINGHARD III:
 Whell's the couse, the came light gacks,
 And the for mought you in Aut fries the not high shee
 bot thou the sought bechive in that to doth groan you,
 No relving thee post mose the wear
-```
+
 
 Not bad for ~3 minutes on a CPU, for a hint of the right character gestalt. If you're willing to wait longer, feel free to tune the hyperparameters, increase the size of the network, the context length (`--block_size`), the length of training, etc.
 
@@ -180,10 +181,10 @@ Finally, to train on a single GPU simply run the `python train.py` script. Have 
 OpenAI GPT-2 checkpoints allow us to get some baselines in place for openwebtext. We can get the numbers as follows:
 
 ```sh
-$ python train.py config/eval_gpt2.py
-$ python train.py config/eval_gpt2_medium.py
-$ python train.py config/eval_gpt2_large.py
-$ python train.py config/eval_gpt2_xl.py
+python train.py config/eval_gpt2.py
+python train.py config/eval_gpt2_medium.py
+python train.py config/eval_gpt2_large.py
+python train.py config/eval_gpt2_xl.py
 ```
 
 and observe the following losses on train and val:
@@ -207,7 +208,6 @@ python train.py config/finetune_shakespeare.py
 
 This will load the config parameter overrides in `config/finetune_shakespeare.py` (I didn't tune them much though). Basically, we initialize from a GPT2 checkpoint with `init_from` and train as normal, except shorter and with a small learning rate. If you're running out of memory try decreasing the model size (they are `{'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}`) or possibly decreasing the `block_size` (context length). The best checkpoint (lowest validation loss) will be in the `out_dir` directory, e.g. in `out-shakespeare` by default, per the config file. You can then run the code in `sample.py --out_dir=out-shakespeare`:
 
-```
 THEODORE:
 Thou shalt sell me to the highest bidder: if I die,
 I sell thee to the first; if I go mad,
@@ -227,7 +227,6 @@ THEODORE:
 Thou know'st not what thou sell'st; thou, a woman,
 Thou art ever a victim, a thing of no worth:
 Thou hast no right, no right, but to be sold.
-```
 
 Whoa there, GPT, entering some dark place over there. I didn't really tune the hyperparameters in the config too much, feel free to try!
 
@@ -252,14 +251,14 @@ Note that the code by default uses [PyTorch 2.0](https://pytorch.org/get-started
 
 ## todos
 
-- Investigate and add FSDP instead of DDP
-- Eval zero-shot perplexities on standard evals (e.g. LAMBADA? HELM? etc.)
-- Finetune the finetuning script, I think the hyperparams are not great
-- Schedule for linear batch size increase during training
-- Incorporate other embeddings (rotary, alibi)
-- Separate out the optim buffers from model params in checkpoints I think
-- Additional logging around network health (e.g. gradient clip events, magnitudes)
-- Few more investigations around better init etc.
+* Investigate and add FSDP instead of DDP
+* Eval zero-shot perplexities on standard evals (e.g. LAMBADA? HELM? etc.)
+* Finetune the finetuning script, I think the hyperparams are not great
+* Schedule for linear batch size increase during training
+* Incorporate other embeddings (rotary, alibi)
+* Separate out the optim buffers from model params in checkpoints I think
+* Additional logging around network health (e.g. gradient clip events, magnitudes)
+* Few more investigations around better init etc.
 
 ## troubleshooting
 
@@ -269,7 +268,7 @@ For some context on this repository, GPT, and language modeling it might be help
 
 For more questions/discussions feel free to stop by **#nanoGPT** on Discord:
 
-[![](https://dcbadge.vercel.app/api/server/3zy8kqD9Cp?compact=true&style=flat)](https://discord.gg/3zy8kqD9Cp)
+[![Discord server badge](https://dcbadge.vercel.app/api/server/3zy8kqD9Cp?compact=true&style=flat)](https://discord.gg/3zy8kqD9Cp)
 
 ## acknowledgements
 

@@ -13,3 +13,4 @@ venv/
 .env
 wandb*
 stuff.txt
+adapted_gemma_nordic
