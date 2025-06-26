@@ -26,6 +26,35 @@ class LayerNorm(nn.Module):
     def forward(self, input):
         return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
 
+# In model.py
+class MoELayer(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.n_experts = config.n_experts
+        self.n_experts_per_tok = config.n_experts_per_tok
+        self.router = nn.Linear(config.n_embd, self.n_experts, bias=False)
+        self.experts = nn.ModuleList([MLP(config) for _ in range(self.n_experts)])
+
+    def forward(self, x):
+        B, T, C = x.shape
+        x_flat = x.view(-1, C)
+
+        router_logits = self.router(x_flat)
+        routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
+        top_k_weights, top_k_indices = torch.topk(routing_weights, self.n_experts_per_tok, dim=-1)
+        top_k_weights_norm = top_k_weights / top_k_weights.sum(dim=-1, keepdim=True)
+
+        final_output = torch.zeros_like(x_flat)
+
+        for i in range(self.n_experts):
+            expert_mask = (top_k_indices == i).any(dim=-1)
+            if torch.any(expert_mask):
+                expert_tokens = x_flat[expert_mask]
+                expert_output = self.experts[i](expert_tokens)
+                gating_scores = top_k_weights_norm[expert_mask, (top_k_indices[expert_mask] == i).nonzero(as_tuple=True)[1]].unsqueeze(1)
+                final_output[expert_mask] += gating_scores * expert_output
+
+        return final_output.view(B, T, C), router_logits
 class CausalSelfAttention(nn.Module):
 
     def __init__(self, config):
@@ -92,19 +121,31 @@ class MLP(nn.Module):
         return x
 
 class Block(nn.Module):
-
     def __init__(self, config):
         super().__init__()
         self.ln_1 = LayerNorm(config.n_embd, bias=config.bias)
         self.attn = CausalSelfAttention(config)
         self.ln_2 = LayerNorm(config.n_embd, bias=config.bias)
-        self.mlp = MLP(config)
+        # Make sure this uses MoELayer for your MoE model
+        if hasattr(config, 'n_experts') and config.n_experts > 0:
+            self.mlp = MoELayer(config)
+        else:
+            self.mlp = MLP(config)
 
     def forward(self, x):
         x = x + self.attn(self.ln_1(x))
-        x = x + self.mlp(self.ln_2(x))
-        return x
 
+        # --- Correctly handle MoE output ---
+        mlp_output = self.mlp(self.ln_2(x))
+
+        # Check if the output is a tuple (from MoELayer)
+        if isinstance(mlp_output, tuple):
+            x_mlp, router_logits = mlp_output
+            x = x + x_mlp
+            return x, router_logits
+        else: # Standard MLP output
+            x = x + mlp_output
+            return x, None
 @dataclass
 class GPTConfig:
     block_size: int = 1024
@@ -114,6 +155,10 @@ class GPTConfig:
     n_embd: int = 768
     dropout: float = 0.0
     bias: bool = True # True: bias in Linears and LayerNorms, like GPT-2. False: a bit better and faster
+    # --- Added these lines for MoE ---
+    n_experts: int = 8 # Default value, will be overridden by your config
+    n_experts_per_tok: int = 2 # Default value
+    n_shared_experts: int = 0 # Default value
 
 class GPT(nn.Module):
 
@@ -167,18 +212,25 @@ class GPT(nn.Module):
         elif isinstance(module, nn.Embedding):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
+    # Change the forward method to accept targets for training MoE models
     def forward(self, idx, targets=None):
         device = idx.device
         b, t = idx.size()
         assert t <= self.config.block_size, f"Cannot forward sequence of length {t}, block size is only {self.config.block_size}"
-        pos = torch.arange(0, t, dtype=torch.long, device=device) # shape (t)
+        pos = torch.arange(0, t, dtype=torch.long, device=device)
 
         # forward the GPT model itself
         tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
         pos_emb = self.transformer.wpe(pos) # position embeddings of shape (t, n_embd)
         x = self.transformer.drop(tok_emb + pos_emb)
+
+        router_logits_list = []
         for block in self.transformer.h:
-            x = block(x)
+            # Block now returns a tuple (x, router_logits)
+            x, router_logits = block(x)
+            if router_logits is not None:
+                router_logits_list.append(router_logits)
+
         x = self.transformer.ln_f(x)
 
         if targets is not None:
@@ -190,7 +242,8 @@ class GPT(nn.Module):
             logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the time dim
             loss = None
 
-        return logits, loss
+        # Return the router logits along with the main outputs
+        return (logits, loss), router_logits_list
 
     def crop_block_size(self, block_size):
         # model surgery to decrease the block size if necessary
@@ -312,8 +365,16 @@ class GPT(nn.Module):
         for _ in range(max_new_tokens):
             # if the sequence context is growing too long we must crop it at block_size
             idx_cond = idx if idx.size(1) <= self.config.block_size else idx[:, -self.config.block_size:]
+
+
             # forward the model to get the logits for the index in the sequence
-            logits, _ = self(idx_cond)
+            # The model now returns a nested tuple ((logits, loss), router_logits_list) for MoE models.
+            # We need to unpack it correctly to get the logits tensor.
+            (logits, _), _ = self(idx_cond)
+
+            # OLD way before MoE implementation
+            # forward the model to get the logits for the index in the sequence
+            #logits, _ = self(idx_cond)
             # pluck the logits at the final step and scale by desired temperature
             logits = logits[:, -1, :] / temperature
             # optionally crop the logits to only the top k options

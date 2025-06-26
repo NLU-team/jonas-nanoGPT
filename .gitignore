@@ -13,4 +13,8 @@ venv/
 .env
 wandb*
 stuff.txt
-adapted_gemma_nordic
+adapted_gemma_nordic/
+*.log
+wandb/
+out-nordic-moe-small-original-gemma/
+out-swedish-gemma/

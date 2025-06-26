@@ -10,7 +10,9 @@ load_dotenv()
 
 # Make sure you are logged in to Hugging Face Hub and accepted Gemma terms
 # You might need `from huggingface_hub import login` and `login()`
-tokenizer_id = "google/gemma-2b" # Or another Gemma model ID
+#tokenizer_id = "google/gemma-2b" # Or another Gemma model ID
+tokenizer_id = "data/swedish/adapted_gemma_nordic" 
+
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
 
 # download the tiny shakespeare dataset
