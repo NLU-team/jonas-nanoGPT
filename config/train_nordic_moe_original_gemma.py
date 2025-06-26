@@ -24,8 +24,8 @@ init_from = 'resume' # 'resume' after crasch, 'scratch' from start
 # model architecture for a ~1.7B MoE model
 # model architecture (Reduced size due to cuda oom on dgx)
 n_layer = 12       # Reduced from 18
-n_head = 12        # Reduced from 16
-n_embd = 1536      # Reduced from 2048
+n_head = 8         # Reduced from 16
+n_embd = 1024      # Reduced from 2048
 dropout = 0.0
 bias = False
 
