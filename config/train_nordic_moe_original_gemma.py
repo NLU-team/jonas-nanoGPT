@@ -14,7 +14,7 @@ wandb_run_name = 'moe-small-original-gemma-tokenizer'
 
 # data
 dataset = 'swedish'  # This should be the directory containing your train.bin and val.bin
-gradient_accumulation_steps = 20 * 3  # For 3 GPUs to simulate a larger batch size
+gradient_accumulation_steps = 20 * 5  # For 5 GPUs to simulate a larger batch size
 batch_size = 2
 block_size = 512
 # Use the vocab size from the original Gemma tokenizer you used for the .bin files

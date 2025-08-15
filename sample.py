@@ -16,11 +16,15 @@ load_dotenv()
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
 out_dir = 'out' # ignored if init_from is not 'resume'
 #start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
-start = "Det var en gång en konstig gubbe" #
-num_samples = 10 # number of samples to draw
-max_new_tokens = 200 # number of tokens generated in each sample
-temperature = 0.6 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
-top_k = 200 # retain only the top_k most likely tokens, clamp others to have 0 probability
+start = "Det var en gång" #
+#start = "Einu sinni var "
+print("Using start prompt:", start, "---------------")
+print("Using out_dir:", out_dir)
+print("############################")
+num_samples = 2 # number of samples to draw
+max_new_tokens = 50 # number of tokens generated in each sample
+temperature = 0.3 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
+top_k = 100 # retain only the top_k most likely tokens, clamp others to have 0 probability
 seed = 1337
 device = 'cuda:1' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
 dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'

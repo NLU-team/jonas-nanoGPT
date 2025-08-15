@@ -10,18 +10,12 @@ __pycache__/
 input.txt
 env/
 venv/
+.venv/
 .env
 wandb*
 stuff.txt
 adapted_gemma_nordic/
 *.log
-<<<<<<< HEAD
 wandb/
 out-nordic-moe-small-original-gemma/
 out-swedish-gemma/
-=======
-wandb/*.log
-wandb/debug-internal.log
-wandb/debug.log
-wandb/latest-run
->>>>>>> e7ad741 (new MoE test)

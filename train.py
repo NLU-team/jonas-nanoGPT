@@ -176,8 +176,8 @@ if compile:
 
 if ddp:
     #model = DDP(model, device_ids=[ddp_local_rank]) #Old
-    model = DDP(model, device_ids=[ddp_local_rank], find_unused_parameters=True)
-    model = DDP(model, device_ids=[ddp_local_rank], find_unused_parameters=True)
+    #model = DDP(model, device_ids=[ddp_local_rank], find_unused_parameters=True)
+    model = DDP(model, device_ids=[ddp_local_rank], find_unused_parameters=False)
 
 raw_model = model.module if ddp else model
 
@@ -263,14 +263,8 @@ while True:
                     router_logits_flat = router_logits.view(-1, E)
 
                     routing_weights = F.softmax(router_logits_flat, dim=1)
-<<<<<<< HEAD
-                    _, top_k_indices = torch.topk(routing_weights, raw_model.config.n_experts_per_tok, dim=-1)
-
-=======
                     #_, top_k_indices = torch.topk(routing_weights, config.n_experts_per_tok, dim=-1) # also wrong config
                     _, top_k_indices = torch.topk(routing_weights, raw_model.config.n_experts_per_tok, dim=-1)
-                    
->>>>>>> e7ad741 (new MoE test)
                     m_i = torch.zeros(E, device=X.device)
                     for i in range(E):
                         m_i[i] = (top_k_indices == i).any(dim=-1).float().mean()
